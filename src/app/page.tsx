@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import PrinterDialog from "@/components/print/PrinterDialog";
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -152,11 +153,14 @@ export default function Home() {
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">WhatsApp Order Management</h1>
-          {isAdmin && (
-            <Button asChild>
-              <a href="/admin">Go to Admin Dashboard</a>
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            <PrinterDialog />
+            {isAdmin && (
+              <Button asChild>
+                <a href="/admin">Go to Admin Dashboard</a>
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -404,7 +408,7 @@ export default function Home() {
                     </TableCell>
                     <TableCell>{product.name}</TableCell>
                     <TableCell className="max-w-[200px] truncate">{product.description}</TableCell>
-                    <TableCell>${product.price.toFixed(2)}</TableCell>
+                    <TableCell>{formatCurrency(product.price)}</TableCell>
                     <TableCell>{product.stock}</TableCell>
                     <TableCell>{product.category}</TableCell>
                     <TableCell>

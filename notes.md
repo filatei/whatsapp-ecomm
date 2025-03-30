@@ -1,0 +1,1 @@
+# rsync -avz --exclude=node_modules --exclude=.next --exclude=.env.local -e "ssh -p 2525" ./ user2@fido.torama.ng:/var/www/whatsapp.torama.ng/

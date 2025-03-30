@@ -1,13 +1,11 @@
+'use client';
+
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import ProductTable from '@/components/admin/products/ProductTable';
 import { Suspense } from 'react';
 
 export default function ProductsPage() {
-  const handleProductDeleted = () => {
-    // Refresh the table or handle deletion
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -19,7 +17,7 @@ export default function ProductsPage() {
       </div>
 
       <Suspense fallback={<div>Loading products...</div>}>
-        <ProductTable onProductDeleted={handleProductDeleted} />
+        <ProductTable />
       </Suspense>
     </div>
   );

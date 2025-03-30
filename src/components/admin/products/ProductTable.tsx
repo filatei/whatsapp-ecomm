@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -43,21 +43,30 @@ import { Product } from '@/types/product';
 
 const ITEMS_PER_PAGE = 10;
 
-interface ProductTableProps {
-  products?: Product[];
-  onProductDeleted: () => void;
-}
-
-export default function ProductTable({ 
-  products = [], 
-  onProductDeleted,
-}: ProductTableProps) {
+export default function ProductTable() {
+  const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch('/api/products');
+      if (!response.ok) throw new Error('Failed to fetch products');
+      const data = await response.json();
+      setProducts(data);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast.error('Failed to fetch products');
+    }
+  };
+
   // Filter products based on search query
-  const filteredProducts = (products || []).filter((product) =>
+  const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
     product.category.toLowerCase().includes(searchQuery.toLowerCase())
@@ -94,7 +103,7 @@ export default function ProductTable({
       }
 
       toast.success('Product deleted successfully');
-      onProductDeleted();
+      fetchProducts(); // Refresh the table
     } catch (error) {
       console.error('Error deleting product:', error);
       toast.error('Failed to delete product. Please try again.');

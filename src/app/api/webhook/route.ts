@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { WhatsAppService } from '@/lib/whatsapp/whatsappService';
 
+// Create instance without initializing Socket.IO
 const whatsappService = WhatsAppService.getInstance();
 
 export async function GET(request: Request) {

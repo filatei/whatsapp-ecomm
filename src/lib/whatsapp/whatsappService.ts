@@ -30,7 +30,7 @@ interface WhatsAppMessage {
 
 export class WhatsAppService {
     private static instance: WhatsAppService;
-    private io = getServer();
+    private io: any = null;
     private accessToken: string;
     private phoneNumberId: string;
     private apiVersion: string;
@@ -46,6 +46,13 @@ export class WhatsAppService {
             WhatsAppService.instance = new WhatsAppService();
         }
         return WhatsAppService.instance;
+    }
+
+    private getIO() {
+        if (!this.io) {
+            this.io = getServer();
+        }
+        return this.io;
     }
 
     async handleIncomingMessage(message: string) {
