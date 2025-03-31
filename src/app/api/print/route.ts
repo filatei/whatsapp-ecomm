@@ -9,6 +9,9 @@ import { Socket } from 'net';
 
 escpos.Network = require("escpos-network"); // Required for network printing
 
+// Force dynamic route, no static generation
+export const dynamic = 'force-dynamic';
+
 interface PrintRequest {
     ip: string;
     orderId: string;
@@ -21,6 +24,11 @@ interface PrintRequest {
 }
 
 export async function POST(request: Request) {
+    // During build time, return success without printing
+    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'build') {
+        return NextResponse.json({ success: true });
+    }
+
     try {
         const data: PrintRequest = await request.json();
         const { ip, orderId, items, total } = data;

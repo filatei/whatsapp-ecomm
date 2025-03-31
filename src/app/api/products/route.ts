@@ -12,7 +12,6 @@ export async function GET() {
 
         // Fetch all products
         const products = await Product.find({ isAvailable: true }).sort({ createdAt: -1 });
-        console.log('Products:', products);
 
         return NextResponse.json(products);
     } catch (error) {
@@ -90,8 +89,6 @@ export async function POST(request: Request) {
             isAvailable,
             images: imageUrls,
         });
-
-        console.log('Created product:', product);
 
         // Revalidate the products page
         revalidatePath('/');

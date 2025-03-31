@@ -1,0 +1,15 @@
+{
+  "appId": "com.whatsappordermgt.app",
+  "appName": "WhatsApp Order Management",
+  "webDir": "out",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "Printer": {
+      "printerIp": "192.168.1.100"
+    }
+    android: {
+  javaVersion: "17"
+}
+  }
+  
+} 

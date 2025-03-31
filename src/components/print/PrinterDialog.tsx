@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
 import {
@@ -11,81 +11,89 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { toast } from 'sonner';
-
-interface Printer {
-  ip: string;
-  name: string;
-}
+import ThermalPrinter from '@/plugins/ThermalPrinter';
 
 export default function PrinterDialog() {
-  const [printers, setPrinters] = useState<Printer[]>([]);
-  const [selectedPrinter, setSelectedPrinter] = useState<string>("192.168.1.100");
-  const [customIp, setCustomIp] = useState<string>("");
-  const [isScanning, setIsScanning] = useState(false);
-
-  useEffect(() => {
-    scanPrinters();
-  }, []);
-
-  const scanPrinters = async () => {
-    try {
-      setIsScanning(true);
-      const response = await fetch("/api/print/scan");
-      if (!response.ok) throw new Error("Failed to scan printers");
-      const data = await response.json();
-      setPrinters(data.printers);
-      
-      // Set default printer if available
-      if (data.printers.length > 0) {
-        setSelectedPrinter(data.printers[0].ip);
-      }
-    } catch (error) {
-      console.error("Error scanning printers:", error);
-      toast.error("Failed to scan printers");
-    } finally {
-      setIsScanning(false);
-    }
-  };
+  const [printerIp, setPrinterIp] = useState<string>("192.168.1.100");
+  const [isPrinting, setIsPrinting] = useState(false);
 
   const handlePrint = async () => {
     try {
-      const response = await fetch("/api/print", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ip: customIp || selectedPrinter,
-          orderId: "TEST-" + Date.now(),
-          items: [
-            {
-              name: "Test Item 1",
-              qty: 2,
-              price: 10.99,
-            },
-            {
-              name: "Test Item 2",
-              qty: 1,
-              price: 15.99,
-            },
-          ],
-          total: 37.97,
-        }),
+      setIsPrinting(true);
+      console.log('Starting print process...');
+
+      // Format receipt data
+      const receiptData = {
+        orderId: "TEST-" + Date.now(),
+        items: [
+          {
+            name: "Test Item 1",
+            qty: 2,
+            price: 10.99,
+          },
+          {
+            name: "Test Item 2",
+            qty: 1,
+            price: 15.99,
+          },
+        ],
+        total: 37.97,
+      };
+
+      // Convert receipt data to ESC/POS commands
+      const escposData = [
+        '\x1B\x40', // Initialize printer
+        '\x1B\x61\x01', // Center alignment
+        'ORDER RECEIPT\n\n',
+        '\x1B\x61\x00', // Left alignment
+        `Order ID: ${receiptData.orderId}\n`,
+        '------------------------\n',
+        ...receiptData.items.map(item => 
+          `${item.name}\n${item.qty} x ${item.price.toFixed(2)} = ${(item.qty * item.price).toFixed(2)}\n`
+        ),
+        '------------------------\n',
+        '\x1B\x61\x02', // Right alignment
+        `TOTAL: ${receiptData.total.toFixed(2)}\n`,
+        '\x1B\x61\x01', // Center alignment
+        '\nThank you for your order!\n\n\n',
+        '\x1D\x56\x41\x00', // Cut paper
+      ].join('');
+
+      console.log('Sending print data to printer...');
+      const result = await ThermalPrinter.print({
+        ip: printerIp,
+        data: escposData
       });
 
-      if (!response.ok) throw new Error("Failed to print");
-      toast.success("Test receipt printed successfully");
+      if (!result.success) {
+        throw new Error(result.error || 'Print failed');
+      }
+
+      console.log('Print completed successfully');
+      toast.success('Receipt printed successfully');
     } catch (error) {
-      console.error("Error printing:", error);
-      toast.error("Failed to print receipt");
+      console.error('Error in print process:', error);
+      toast.error('Failed to print receipt: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setIsPrinting(false);
+    }
+  };
+
+  const handleDiscover = async () => {
+    try {
+      console.log('Discovering printers...');
+      const result = await ThermalPrinter.discover();
+      
+      if (result.printers.length > 0) {
+        setPrinterIp(result.printers[0].ip);
+        toast.success(`Found ${result.printers.length} printer(s)`);
+      } else {
+        toast.warning('No printers found');
+      }
+    } catch (error) {
+      console.error('Error discovering printers:', error);
+      toast.error('Failed to discover printers');
     }
   };
 
@@ -102,43 +110,28 @@ export default function PrinterDialog() {
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Select Printer</label>
-            <Select
-              value={selectedPrinter}
-              onValueChange={setSelectedPrinter}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a printer" />
-              </SelectTrigger>
-              <SelectContent>
-                {printers.map((printer) => (
-                  <SelectItem key={printer.ip} value={printer.ip}>
-                    {printer.name} ({printer.ip})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <label className="text-sm font-medium">Printer IP Address</label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Enter printer IP (e.g., 192.168.1.100)"
+                value={printerIp}
+                onChange={(e) => setPrinterIp(e.target.value)}
+              />
+              <Button 
+                variant="outline"
+                onClick={handleDiscover}
+              >
+                Discover
+              </Button>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Or Enter Custom IP</label>
-            <Input
-              placeholder="Enter printer IP (e.g., 192.168.1.100)"
-              value={customIp}
-              onChange={(e) => setCustomIp(e.target.value)}
-            />
-          </div>
-
-          <div className="flex justify-between items-center">
-            <Button
-              variant="outline"
-              onClick={scanPrinters}
-              disabled={isScanning}
+          <div className="flex justify-end">
+            <Button 
+              onClick={handlePrint}
+              disabled={isPrinting}
             >
-              {isScanning ? "Scanning..." : "Scan Network"}
-            </Button>
-            <Button onClick={handlePrint}>
-              Print Test Receipt
+              {isPrinting ? 'Printing...' : 'Print Receipt'}
             </Button>
           </div>
         </div>

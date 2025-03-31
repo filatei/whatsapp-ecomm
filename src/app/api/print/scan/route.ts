@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
-import { exec } from 'child_process';
-import { promisify } from 'util';
 import * as net from 'net';
 
-const execAsync = promisify(exec);
+// Force dynamic route, no static generation
+export const dynamic = 'force-dynamic';
 
 async function isPrinterAvailable(ip: string): Promise<boolean> {
     return new Promise((resolve) => {
@@ -30,6 +29,13 @@ async function isPrinterAvailable(ip: string): Promise<boolean> {
 }
 
 export async function GET() {
+    // During build time, return default printer only
+    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'build') {
+        return NextResponse.json({
+            printers: [{ ip: '192.168.1.100', name: 'Default Printer' }]
+        });
+    }
+
     try {
         // Default printer IP
         const defaultPrinter = { ip: '192.168.1.100', name: 'Default Printer' };

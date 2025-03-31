@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">whatsapp-ordermgt</string>
-    <string name="title_activity_main">whatsapp-ordermgt</string>
-    <string name="package_name">ng.torama.whatsapp</string>
-    <string name="custom_url_scheme">ng.torama.whatsapp</string>
+    <string name="app_name">WhatsApp Order Management</string>
+    <string name="title_activity_main">WhatsApp Order Management</string>
+    <string name="package_name">com.whatsappordermgt.app</string>
+    <string name="custom_url_scheme">com.whatsappordermgt.app</string>
 </resources>
